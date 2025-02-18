@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>reCAPTCHA v3 Demo</title>
+    <!-- reCAPTCHA v3 Script -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LePW9sqAAAAAAb2VGs4GBljZXr9vVJ_uJQdWt0M"></script>
+</head>
+<body>
+    <h1>Number Verification</h1>
+    
+    <!-- Submission Form -->
+    <form id="demoForm">
+        <label for="number">Enter Number:</label>
+        <input type="number" 
+               id="number" 
+               name="number" 
+               required
+               pattern="\d+">
+        
+        <!-- reCAPTCHA v3 Implementation -->
+        <button class="g-recaptcha" 
+                data-sitekey="6LePW9sqAAAAAAb2VGs4GBljZXr9vVJ_uJQdWt0M" 
+                data-callback="onSubmit" 
+                data-action="submit">
+            Submit
+        </button>
+    </form>
+
+    <!-- Minimal Client-Side Handling -->
+    <script>
+        function onSubmit(token) {
+            const number = document.getElementById('number').value;
+            
+            fetch('/submit', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({number, recaptcha: token})
+            })
+            .then(response => response.json())
+            .then(data => alert(data.result))
+            .catch(error => alert('Verification failed'));
+        }
+    </script>
+</body>
+</html>
