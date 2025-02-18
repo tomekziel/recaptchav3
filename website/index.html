@@ -38,7 +38,7 @@
                 body: JSON.stringify({number, recaptcha: token})
             })
             .then(response => response.json())
-            .then(data => alert(data))
+            .then(data => alert(JSON.stringify(data)))
             .catch(error => alert('Verification failed'));
         }
     </script>
