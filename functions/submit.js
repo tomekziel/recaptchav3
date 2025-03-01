@@ -1,7 +1,7 @@
 export async function onRequestPost({ request, env }) {
     try {
         const { number, recaptcha } = await request.json();
-        
+
         // Input Validation
         if (!number || !recaptcha) {
             return new Response(JSON.stringify({
@@ -11,33 +11,44 @@ export async function onRequestPost({ request, env }) {
         }
 
         // reCAPTCHA Verification
-        const verifyUrl = new URL('https://www.google.com/recaptcha/api/siteverify');
-        verifyUrl.searchParams.append('secret', env.RECAPTCHA_SECRET);
-        verifyUrl.searchParams.append('response', recaptcha);
-        
-        const verification = await fetch(verifyUrl);
-        const { success, score } = await verification.json();
+        const verifyUrl = "https://www.google.com/recaptcha/api/siteverify";
+        const formData = new URLSearchParams();
+        formData.append("secret", env.RECAPTCHA_SECRET);
+        formData.append("response", recaptcha);
 
-        // Score Thresholding
-        if (!success || score < 0.5) {
+        const verificationResponse = await fetch(verifyUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData.toString(),
+        });
+
+        if (!verificationResponse.ok) {
+            throw new Error("Failed to contact reCAPTCHA server");
+        }
+
+        const verificationData = await verificationResponse.json();
+        const { success, score } = verificationData;
+
+        if (!success || typeof score !== "number" || score < 0.5) {
             return new Response(JSON.stringify({
                 result: "FAIL",
                 reason: "Failed reCAPTCHA verification",
-                score
+                score: score ?? "N/A"
             }), { status: 403 });
         }
 
         return new Response(JSON.stringify({
             result: "OK",
-            number: Number(number)
+            number: Number(number),
+            score: score ?? "N/A"
         }), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: { "Content-Type": "application/json" }
         });
 
     } catch (error) {
         return new Response(JSON.stringify({
             result: "FAIL",
-            reason: "Server error"
+            reason: error.message || "Server error"
         }), { status: 500 });
     }
 }
